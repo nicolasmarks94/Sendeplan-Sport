@@ -81,7 +81,23 @@
   .search::placeholder{color:var(--muted);}
   .search:focus{outline:none; border-color:var(--accent);}
 
-  .left-controls{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start;}
+  .left-controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+
+  .switch-control{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;}
+  .switch{position:relative; display:inline-block; width:34px; height:20px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0;}
+  .switch-slider{
+    position:absolute; inset:0; background:var(--line); border-radius:999px;
+    transition:background .15s ease;
+  }
+  .switch-slider::before{
+    content:''; position:absolute; width:16px; height:16px; left:2px; top:2px;
+    background:#fff; border-radius:50%; transition:transform .15s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,0.2);
+  }
+  .switch input:checked + .switch-slider{background:var(--accent);}
+  .switch input:checked + .switch-slider::before{transform:translateX(14px);}
+  .switch-label{font-size:13px; color:var(--muted); font-weight:500;}
 
   .chips{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{
@@ -277,6 +293,10 @@
             </div>
           </div>
         </div>
+        <label class="switch-control">
+          <span class="switch"><input type="checkbox" id="hidePlayed"><span class="switch-slider"></span></span>
+          <span class="switch-label">Gelaufene ausblenden</span>
+        </label>
       </div>
       <div class="right-group">
         <div id="rightControls"></div>
@@ -334,6 +354,7 @@ let activeSports = new Set(Object.keys(SPORT_META));
 let statusFilter = 'all';
 let pickedFilter = 'all'; // all | picked
 let selectedTeams = new Set();
+let hidePlayed = false;
 
 const WD_ABBR = {'Montag':'Mo','Dienstag':'Di','Mittwoch':'Mi','Donnerstag':'Do','Freitag':'Fr','Samstag':'Sa','Sonntag':'So',
                  'Mo':'Mo','Di':'Di','Mi':'Mi','Do':'Do','Fr':'Fr','Sa':'Sa','So':'So','':''};
@@ -577,6 +598,10 @@ function updateTeamUI(){
 }
 
 document.getElementById('search').addEventListener('input', render);
+document.getElementById('hidePlayed').addEventListener('change', (e)=>{
+  hidePlayed = e.target.checked;
+  render();
+});
 
 // ---------- Legend ----------
 const legendEl = document.getElementById('legend');
@@ -610,6 +635,7 @@ function render(){
   const data = currentDataset();
 
   const filtered = data.filter(e=>{
+    if(hidePlayed && e.played) return false;
     if(isSendeplan){
       if(!activeSports.has(e.league)) return false;
       if(statusFilter !== 'all' && e.status !== statusFilter) return false;
