@@ -199,12 +199,12 @@
   .ausspielung-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .aw-chip{
     display:flex; align-items:center; justify-content:center;
-    padding:4px 8px; border-radius:7px;
+    padding:7px 12px; border-radius:999px;
     background:var(--surface); border:1px solid var(--line);
     cursor:pointer; transition:all .15s ease; opacity:0.4;
   }
   .aw-chip.active{opacity:1; border-color:#c9c6bd; background:var(--surface-2);}
-  .aw-chip img{height:14px; width:auto; max-width:48px; object-fit:contain; display:block;}
+  .aw-chip img{height:16px; width:auto; max-width:52px; object-fit:contain; display:block;}
 
   .matchup{font-size:14.5px; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .matchup .vs{color:var(--muted); margin:0 2px; font-weight:400;}
@@ -398,23 +398,35 @@ function buildChips(){
   chipsEl.innerHTML = '';
   if(activeTab!=='sendeplan'){ chipsEl.style.display='none'; return; }
   chipsEl.style.display='flex';
-  activeSports = new Set(Object.keys(SPORT_META));
+  activeSports = new Set(Object.keys(SPORT_META)); // Startzustand: alles sichtbar
+  const chipEls = {};
   Object.entries(SPORT_META).forEach(([sport, meta])=>{
     const chip = document.createElement('div');
     chip.className = 'chip active';
     chip.style.background = meta.color;
     chip.style.borderColor = meta.color;
     chip.innerHTML = `${meta.label || sport}`;
+    chipEls[sport] = chip;
+
     chip.addEventListener('click', ()=>{
-      if(activeSports.has(sport)){
-        activeSports.delete(sport);
-        chip.classList.remove('active');
-        chip.style.background=''; chip.style.color=''; chip.style.borderColor='var(--line)';
+      const isSolo = activeSports.size === 1 && activeSports.has(sport);
+      if(isSolo){
+        // schon isoliert -> wieder alles anzeigen
+        activeSports = new Set(Object.keys(SPORT_META));
       } else {
-        activeSports.add(sport);
-        chip.classList.add('active');
-        chip.style.background=meta.color; chip.style.color='#fff'; chip.style.borderColor=meta.color;
+        // nur diese Sportart isolieren
+        activeSports = new Set([sport]);
       }
+      Object.entries(SPORT_META).forEach(([s, m])=>{
+        const c = chipEls[s];
+        if(activeSports.has(s)){
+          c.classList.add('active');
+          c.style.background = m.color; c.style.color = '#fff'; c.style.borderColor = m.color;
+        } else {
+          c.classList.remove('active');
+          c.style.background = ''; c.style.color = ''; c.style.borderColor = 'var(--line)';
+        }
+      });
       render();
     });
     chipsEl.appendChild(chip);
@@ -426,14 +438,24 @@ function buildAusspielungRow(){
   ausspielungRowEl.innerHTML = '';
   if(activeTab!=='sendeplan'){ ausspielungRowEl.style.display='none'; return; }
   ausspielungRowEl.style.display='flex';
-  activeChannels = new Set(Object.keys(AUSSPIELUNG_META));
+  activeChannels = new Set(Object.keys(AUSSPIELUNG_META)); // Startzustand: alles sichtbar
+  const chipEls = {};
   Object.entries(AUSSPIELUNG_META).forEach(([ch, meta])=>{
     const chip = document.createElement('div');
     chip.className = 'aw-chip active';
     chip.innerHTML = `<img src="${meta.logo}" alt="${ch}">`;
+    chipEls[ch] = chip;
+
     chip.addEventListener('click', ()=>{
-      if(activeChannels.has(ch)){ activeChannels.delete(ch); chip.classList.remove('active'); }
-      else { activeChannels.add(ch); chip.classList.add('active'); }
+      const isSolo = activeChannels.size === 1 && activeChannels.has(ch);
+      if(isSolo){
+        activeChannels = new Set(Object.keys(AUSSPIELUNG_META));
+      } else {
+        activeChannels = new Set([ch]);
+      }
+      Object.entries(AUSSPIELUNG_META).forEach(([c, m])=>{
+        chipEls[c].classList.toggle('active', activeChannels.has(c));
+      });
       render();
     });
     ausspielungRowEl.appendChild(chip);
