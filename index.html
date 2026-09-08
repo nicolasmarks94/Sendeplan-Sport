@@ -409,13 +409,17 @@ function buildChips(){
     chipEls[sport] = chip;
 
     chip.addEventListener('click', ()=>{
-      const isSolo = activeSports.size === 1 && activeSports.has(sport);
-      if(isSolo){
-        // schon isoliert -> wieder alles anzeigen
-        activeSports = new Set(Object.keys(SPORT_META));
-      } else {
-        // nur diese Sportart isolieren
+      const allKeys = Object.keys(SPORT_META);
+      const isAllState = activeSports.size === allKeys.length;
+      if(isAllState){
+        // aus dem "Alle"-Zustand heraus: nur diese Sportart isolieren
         activeSports = new Set([sport]);
+      } else {
+        // bereits eine Teilauswahl aktiv: diese Sportart dazu- bzw. abwaehlen
+        if(activeSports.has(sport)) activeSports.delete(sport);
+        else activeSports.add(sport);
+        // Auswahl komplett geleert -> zurueck zu "Alle"
+        if(activeSports.size === 0) activeSports = new Set(allKeys);
       }
       Object.entries(SPORT_META).forEach(([s, m])=>{
         const c = chipEls[s];
@@ -447,11 +451,14 @@ function buildAusspielungRow(){
     chipEls[ch] = chip;
 
     chip.addEventListener('click', ()=>{
-      const isSolo = activeChannels.size === 1 && activeChannels.has(ch);
-      if(isSolo){
-        activeChannels = new Set(Object.keys(AUSSPIELUNG_META));
-      } else {
+      const allKeys = Object.keys(AUSSPIELUNG_META);
+      const isAllState = activeChannels.size === allKeys.length;
+      if(isAllState){
         activeChannels = new Set([ch]);
+      } else {
+        if(activeChannels.has(ch)) activeChannels.delete(ch);
+        else activeChannels.add(ch);
+        if(activeChannels.size === 0) activeChannels = new Set(allKeys);
       }
       Object.entries(AUSSPIELUNG_META).forEach(([c, m])=>{
         chipEls[c].classList.toggle('active', activeChannels.has(c));
